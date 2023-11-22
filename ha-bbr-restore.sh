@@ -3,7 +3,7 @@
 #Place this script in the top level backup folder containing all backup artifacts from all service instance VMs
 
 if [ $# -ne 1 ]; then
-  echo "Script needs 1 argument. Usage: bbr-restore-multi-instance <service deployment name>"
+  echo "Script needs 1 argument. Usage: ha-bbr-restore <service deployment name>"
 fi
 
 export METADATA_FILES=$(find . -type f | grep "metadata" | while read line ; do echo $line ; done)
