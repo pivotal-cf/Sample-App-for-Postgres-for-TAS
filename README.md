@@ -16,7 +16,7 @@ This repostory contains:
 
 ### 1. Build the application
 
-To build the application, run the following command from the root directory:
+To build the application, run the following command from the `postgres-consumer-app` directory:
 
 ```
 mvn clean install && mv target/postgres-demo-0.0.1-SNAPSHOT.jar ./
@@ -24,8 +24,9 @@ mvn clean install && mv target/postgres-demo-0.0.1-SNAPSHOT.jar ./
 
 ### 2. Deploy and bind the application
 
-To deploy the application, first you have to edit the `APP_NAME` and `SVC_INSTANCE_NAME` in the `manifest.ymml` file.
-Then run the following commands from the root directory:
+To deploy the application, first edit the `APP_NAME`,`SVC_INSTANCE_NAME` and `SSL_MODE` in the `postgres-consumer-app/manifest.yml` file.
+The `SSL_MODE` values are listed [here](https://www.postgresql.org/docs/8.4/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).
+Then run the following command from the `postgres-consumer-app` directory:
 ```
 cf push
 ```
