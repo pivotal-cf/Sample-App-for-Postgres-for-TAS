@@ -1,11 +1,11 @@
 ---
 applications:
-  - name: APP_NAME
+  - name: @@APP_NAME@@
     path: postgres-demo-0.0.1-SNAPSHOT.jar
     buildpacks:
       - https://github.com/cloudfoundry/java-buildpack.git
     random-route: true
     services:
-    - SVC_INSTANCE_NAME
+    - @@SVC_INSTANCE_NAME@@
     env:
-      SSL_MODE: disable
+      SSL_MODE: @@SSL_MODE@@
