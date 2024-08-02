@@ -1,5 +1,7 @@
 package com.example.postgresdemo.controller;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.postgresdemo.model.VcapServices;
@@ -26,20 +28,22 @@ import java.util.stream.Stream;
 @RestController
 public class TestPasswordController {
 
-    @Value("${VCAP_SERVICES}")
-    private String vsJson;
+    public TestPasswordController(Credentials credentials, @Qualifier("cfInstanceCert") String cfInstanceCert,
+                                  @Qualifier("cfInstanceKey") String cfInstanceKey) {
+        this.credentials=credentials;
+        this.cfInstanceCert=cfInstanceCert;
+        this.cfInstanceKey=cfInstanceKey;
+    }
 
     @Value("${SSL_MODE}")
     private String envSslMode;
 
-    @Value("${CF_INSTANCE_CERT}")
     private String cfInstanceCert;
-
-    @Value("${CF_INSTANCE_KEY}")
     private String cfInstanceKey;
+    private Credentials credentials;
 
     Logger logger = LoggerFactory.getLogger(TestPasswordController.class);
-    private static Gson gson = new Gson();
+    private static final Gson gson = new Gson();
 
     @RequestMapping(value="/testPasswordConnections", method=RequestMethod.GET)
     public ResponseEntity<List<String>> runTests(){
@@ -62,7 +66,7 @@ public class TestPasswordController {
         results.add(testWrongPassword("verify-full", "postgres"));
         results.add(testSslClientCertWrongPassword("verify-full", "postgres"));
 
-        boolean failed = results.stream().anyMatch( s -> s.contains("failed"));
+        boolean failed = results.stream().anyMatch( s -> s.contains("failed :"));
         HttpStatus status = failed ? HttpStatus.EXPECTATION_FAILED : HttpStatus.OK;
         return ResponseEntity.status(status).body(results);
     }
@@ -72,7 +76,7 @@ public class TestPasswordController {
     }
 
     private String testGoodPassword(){
-        return testConnection(envSslMode, getCreds().getUser(), getCreds().getPassword(), true);
+        return testConnection(envSslMode, this.credentials.getUser(), this.credentials.getPassword(), true);
     }
 
     private String testWrongPassword(String sslMode, String user){
@@ -99,24 +103,28 @@ public class TestPasswordController {
 
     private String test(boolean expected, TestConnectionParams p) {
         DataSource dataSource = buildDataSource(p);
-        boolean actual = testConnection(dataSource);
-        String result = actual == expected ? "passed" : "failed";
+        Pair<Boolean, Exception> testConnectionResultPair = testConnection(dataSource);
+        boolean testConnectionResult = testConnectionResultPair.getLeft();
+        Exception testConnectionException = testConnectionResultPair.getRight();
+
+        String result = testConnectionResult == expected ? "passed" : "failed";
+        String reason = testConnectionException == null ? "n/a" : testConnectionException.getMessage();
+
         return String.format(
-            "%s : test(expected: %b, actual: %b, mode:%s, u:%s, p:'%s', sslcert:'%s', sslkey:'%s')",
-            result, expected, actual, p.sslMode, p.user, p.password, p.clientCertPath, p.clientKeyPath);
+            "%s : test(expected: %b, actual: %b, reason: %s, mode:%s, u:%s, p:'%s', sslcert:'%s', sslkey:'%s')",
+            result, expected, testConnectionResult, reason, p.sslMode, p.user, p.password,
+            p.clientCertPath, p.clientKeyPath);
     }
 
-    private boolean testConnection(DataSource dataSource) {
-        boolean result = true;
+    private Pair<Boolean, Exception> testConnection(DataSource dataSource) {
         try{
-            dataSource.setLoginTimeout(5);
             Connection conn = dataSource.getConnection();
             conn.close();
         }
         catch (Exception sqlException) {
-            result = false;
+            return Pair.of(false, sqlException);
         }
-        return result;
+        return Pair.of(true, null);
     }
 
     private DataSource buildDataSource(TestConnectionParams p) {
@@ -129,13 +137,13 @@ public class TestPasswordController {
     }
 
     private String getBaseJdbc(String sslMode, String certPath, String keyPath){
-        List<String> hosts = getCreds().getHosts();
-        Long port = getCreds().getPort();
+        List<String> hosts = this.credentials.getHosts();
+        Long port = this.credentials.getPort();
         StringBuilder jdbcUri = new StringBuilder("jdbc:postgresql://");
         Stream<String>hostsWithPort=hosts.stream().map(s-> String.format("%s:%d",s,port));
         jdbcUri.append(hostsWithPort.collect(Collectors.joining(",")));
         jdbcUri.append("/")
-            .append(getCreds().getDb())
+            .append(this.credentials.getDb())
             .append("?sslfactory=org.postgresql.ssl.DefaultJavaSSLFactory");
         if(StringUtils.isNotEmpty(sslMode)) {
             jdbcUri.append("&sslmode=").append(sslMode);
@@ -147,18 +155,6 @@ public class TestPasswordController {
         return jdbcUri.toString();
     }
 
-    private Credentials getCreds() {
-        Credentials creds = getVcap().getPostgres().get(0).getCredentials();
-        return creds;
-    }
-
-    private VcapServices vcap;
-    private VcapServices getVcap() {
-        if(vcap == null) {
-            vcap = gson.fromJson(vsJson, VcapServices.class);
-        }
-        return vcap;
-    }
     private class TestConnectionParams {
         public String sslMode;
         public String user;
