@@ -6,12 +6,20 @@ public class Credentials {
     private List<String> hosts;
     private String password;
     private long port;
-    private long serviceGatewayAccessPort;
-    private boolean serviceGatewayEnabled;
+    private ServiceGatewayCredentials service_gateway;
 
     private String user;
     private String db;
-    public String uri;
+    public String uri;    
+    public String jdbcUrl;
+
+    public ServiceGatewayCredentials getService_gateway() {
+        return service_gateway;
+    }
+
+    public void setService_gateway(ServiceGatewayCredentials service_gateway) {
+        this.service_gateway = service_gateway;
+    }
 
     public String getDb() {
         return db;
@@ -37,16 +45,20 @@ public class Credentials {
         this.hosts = hosts;
     }
 
-    public boolean isServiceGatewayEnabled() {
-        return serviceGatewayEnabled;
-    }
-
     public String getUri() {
         return uri;
     }
 
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public void setJdbcUrl(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
     }
 
     public String getPassword() {
@@ -64,24 +76,5 @@ public class Credentials {
     public void setPort(long value) {
         this.port = value;
     }
-
-    public long getServiceGatewayAccessPort() {
-        return serviceGatewayAccessPort;
-    }
-
-    public void setServiceGatewayAccessPort(long value) {
-        this.serviceGatewayAccessPort = value;
-    }
-
-
-    public boolean getServiceGatewayEnabled() {
-        return serviceGatewayEnabled;
-    }
-
-    public void setServiceGatewayEnabled(boolean value) {
-        this.serviceGatewayEnabled = value;
-    }
-
-
 
 }

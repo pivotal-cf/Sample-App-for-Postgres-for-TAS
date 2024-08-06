@@ -9,3 +9,4 @@ applications:
     - @@SVC_INSTANCE_NAME@@
     env:
       SSL_MODE: @@SSL_MODE@@
+      

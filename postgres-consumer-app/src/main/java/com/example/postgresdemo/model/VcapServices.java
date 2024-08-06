@@ -13,8 +13,8 @@ public class VcapServices {
                 '}';
     }
 
-@SerializedName(value = "postgres")
-private List<Postgres> postgres;
+    @SerializedName(value = "postgres")
+    private List<Postgres> postgres;
 
     public List<Postgres> getPostgres() {
         return postgres;
@@ -24,12 +24,6 @@ private List<Postgres> postgres;
         this.postgres = value;
     }
 
-
 }
-
-// Postgres.java
-
-
-// Credentials.java
 
 
