@@ -27,6 +27,12 @@ public class QuestionController {
         return questionRepository.save(question);
     }
 
+    @DeleteMapping("/questions")
+    public ResponseEntity deleteQuestions(Pageable pageable) {
+      questionRepository.deleteAll();
+      return ResponseEntity.ok("Deleted all questions");
+    }
+
     @PutMapping("/questions/{questionId}")
     public Question updateQuestion(@PathVariable Long questionId,
                                    @Valid @RequestBody Question questionRequest) {
