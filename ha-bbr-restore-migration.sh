@@ -6,22 +6,18 @@
 
 
 if [ $# -ne 1 ]; then
-	  echo "Script needs 1 argument. Usage: ha-bbr-restore-migration <service deployment name>"
+  echo "Script needs 1 argument. Usage: ha-bbr-restore-migration <service deployment name>"
 fi
 
-export NUM_OF_POSTGRES_NODES_10_HA=2
-export NUM_OF_METADATA_FILES=$(find . -type f | grep "metadata" | wc -l)
-
-if [[ NUM_OF_METADATA_FILES -gt 1 ]]; then
-    counter=0 
-	export METADATA_FILES=$(find . -type f | grep "metadata" | while read line && ((counter++ < NUM_OF_POSTGRES_NODES_10_HA)); do echo $line ; done)
-else
-	export METADATA_FILES=$(find . -type f | grep "metadata" | while read line ; do echo $line ; done)
-fi
-
+export METADATA_FILES=$(find . -type f | grep "metadata" | while read line ; do echo $line ; done)
 echo $METADATA_FILES
 
 yq eval-all '. as $item ireduce ({}; . *+ $item)' $METADATA_FILES > metadata
+
+#Since 10.0.0 HA has only 2 postgres instances, we have to keep metadata of first 2 instances (index: 0, index: 1) and remove others.
+#Removing index: 2 here
+yq 'del(.instances[] | select(.index == "2"))' metadata > temp-file
+cp temp-file metadata
 
 find . -type f | grep ".*tar" | while read line ; do cp $line ./ ; done
 
