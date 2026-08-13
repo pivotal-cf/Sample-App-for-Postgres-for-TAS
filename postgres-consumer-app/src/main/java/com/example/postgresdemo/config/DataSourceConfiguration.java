@@ -39,6 +39,9 @@ public class DataSourceConfiguration {
     @Value("${SSL_MODE}")
     private String sslMode;
 
+    @Value("${APPEND_TARGET_SERVER_TYPE:true}")
+    private boolean appendTargetServerType;
+
     @Value("${SERVICE_GW_CREDENTIALS}")
     private String svcGwCredentials;
 
@@ -85,10 +88,13 @@ public class DataSourceConfiguration {
             Stream<String>withPort=hosts.stream().map(s-> String.format("%s:%d",s,port));
             jdbcUriBuilder.append(withPort.collect(Collectors.joining(",")));
             jdbcUriBuilder.append("/")
-                .append(credentials.getDb())
-                .append("?targetServerType=master");
+                .append(credentials.getDb());
+            if (appendTargetServerType) {
+                jdbcUriBuilder.append("?targetServerType=master");
+            }
             if(!StringUtils.isEmpty(sslMode)) {
-                jdbcUriBuilder.append("&sslmode="+sslMode);
+                jdbcUriBuilder.append(appendTargetServerType ? "&" : "?");
+                jdbcUriBuilder.append("sslmode="+sslMode);
                 jdbcUriBuilder.append("&sslfactory=org.postgresql.ssl.DefaultJavaSSLFactory");
             }
             logger.info("-------------POSTGRES URL-----------" + jdbcUriBuilder);
